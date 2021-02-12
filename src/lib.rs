@@ -41,12 +41,26 @@ impl Parcel {
     }
 }
 
+//A collection of parcels that form an order
+struct Order {
+    parcels: Vec<Parcel>,
+}
+
+impl Order {
+    //Calculate the total cost of the order
+    fn calculate_order(&self) -> u32 {
+        self.parcels.iter().map(|x| x.get_cost()).sum()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const SMALL_PARCEL: Parcel = Parcel::Small;
     const MEDIUM_PARCEL: Parcel = Parcel::Medium;
+    const LARGE_PARCEL: Parcel = Parcel::Large;
+    const XL_PARCEL: Parcel = Parcel::XL;
 
     #[test]
     fn single_small_parcel_cost_correct() {
@@ -80,5 +94,24 @@ mod tests {
                 long_box
             ))),
         }
+    }
+
+    #[test]
+    fn order_with_one_small_parcel_cost_correct() {
+        let order = Order {
+            parcels: vec![SMALL_PARCEL],
+        };
+        assert_eq!(order.calculate_order(), SMALL_COST)
+    }
+
+    #[test]
+    fn order_with_one_of_each_parcel_cost_correct() {
+        let order = Order {
+            parcels: vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
+        };
+        assert_eq!(
+            order.calculate_order(),
+            SMALL_COST + MEDIUM_COST + LARGE_COST + XL_COST
+        )
     }
 }
