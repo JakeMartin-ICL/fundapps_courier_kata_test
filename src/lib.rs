@@ -39,6 +39,16 @@ impl Parcel {
             Parcel::XL => XL_COST,
         }
     }
+
+    //Produce text string giving name and cost of parcel
+    fn display(&self) -> String {
+        String::from(match self {
+            Parcel::Small => "Small Parcel: $",
+            Parcel::Medium => "Medium Parcel: $",
+            Parcel::Large => "Large Parcel: $",
+            Parcel::XL => "XL Parcel: $",
+        }) + &self.get_cost().to_string()
+    }
 }
 
 //A collection of parcels that form an order
@@ -112,6 +122,14 @@ mod tests {
         assert_eq!(
             order.calculate_order(),
             SMALL_COST + MEDIUM_COST + LARGE_COST + XL_COST
+        )
+    }
+
+    #[test]
+    fn parcel_can_produce_text_giving_name_and_cost() {
+        assert_eq!(
+            SMALL_PARCEL.display(),
+            format!("Small Parcel: ${}", &SMALL_COST.to_string())
         )
     }
 }
