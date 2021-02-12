@@ -1,5 +1,6 @@
 #![feature(exclusive_range_pattern)]
 use std::cmp;
+use std::cmp::Ordering;
 
 const SMALL_COST: u32 = 3;
 const MEDIUM_COST: u32 = 8;
@@ -69,10 +70,33 @@ impl Parcel {
             Parcel::Medium(_) => "Medium Parcel: $",
             Parcel::Large(_) => "Large Parcel: $",
             Parcel::XL(_) => "XL Parcel: $",
-            Parcel::Heavy(_) => "Heavy Parcel: $",
+            Parcel::Heavy(_) => "Heavy Parcel: $" 
         }) + &self.get_cost().to_string()
     }
 }
+
+//Implements ordering for parcels
+impl Ord for Parcel {
+    fn cmp(&self, other: &Parcel) -> Ordering {
+        self.get_cost().cmp(&other.get_cost())
+    }
+}
+
+//Implements partial ordering for parcels
+impl PartialOrd for Parcel {
+    fn partial_cmp(&self, other: &Parcel) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+//Implements equality for parcels (not true equality - just on price)
+impl PartialEq for Parcel {
+    fn eq(&self, other: &Parcel) -> bool {
+        self.get_cost() == other.get_cost()
+    }
+}
+
+impl Eq for Parcel {}
 
 //A collection of parcels that form an order
 struct Order {
@@ -82,7 +106,8 @@ struct Order {
 
 impl Order {
     //Produce new order given parcel vector and speedy_shipping bool (true => speedy selected)
-    pub fn new(parcels: Vec<Parcel>, speedy_shipping: bool) -> Order {
+    pub fn new(mut parcels: Vec<Parcel>, speedy_shipping: bool) -> Order {
+        parcels.sort();
         Order {
             parcels,
             speedy_shipping,
@@ -269,6 +294,7 @@ mod tests {
         )
     }
 
+    
     //Part 4 tests --------------------------------------------------------------
 
     #[test]
@@ -278,27 +304,37 @@ mod tests {
 
         match overweight_small {
             Parcel::Small(_) => Ok(()),
-            _ => Err(String::from(format!(
-                "Produced incorrect parcel type: {:?},should be Small",
-                overweight_small
-            ))),
+            _ => Err(String::from(format!("Produced incorrect parcel type: {:?},should be Small", overweight_small))),
         };
         match heavy_small {
             Parcel::Heavy(_) => Ok(()),
-            _ => Err(String::from(format!(
-                "Produced incorrect parcel type: {:?},should be Heavy",
-                heavy_small
-            ))),
+            _ => Err(String::from(format!("Produced incorrect parcel type: {:?},should be Heavy", heavy_small))),
         }
     }
 
     #[test]
-    fn heavy_parcel_price_correct() {
+    fn heavy_parcel_price_correct(){
         assert_eq!(Parcel::new(Dimensions(1, 1, 1), 25).get_cost(), 50)
     }
 
     #[test]
-    fn overweight_heavy_parcel_price_correct() {
+    fn overweight_heavy_parcel_price_correct(){
         assert_eq!(Parcel::new(Dimensions(1, 1, 1), 55).get_cost(), 55)
+    }
+
+    //Part 5 tests --------------------------------------------------------------
+    #[test]
+    fn orders_get_sorted_by_price() {
+        let order = Order::new(
+            vec![
+                Parcel::new(Dimensions(1, 25, 50), 10),
+                Parcel::new(Dimensions(1, 1, 1), 3),
+            ],
+            false,
+        );
+        assert_eq!(
+            order.produce_invoice(),
+            "Small Parcel: $7\nLarge Parcel: $23\n\nTotal Cost: $30"
+        )
     }
 }
