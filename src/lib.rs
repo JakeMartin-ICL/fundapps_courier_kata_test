@@ -5,12 +5,15 @@ const SMALL_COST: u32 = 3;
 const MEDIUM_COST: u32 = 8;
 const LARGE_COST: u32 = 15;
 const XL_COST: u32 = 25;
+const HEAVY_COST: u32 = 50;
 
 const SMALL_WEIGHT_LIM: u32 = 1;
 const MEDIUM_WEIGHT_LIM: u32 = 3;
 const LARGE_WEIGHT_LIM: u32 = 6;
 const XL_WEIGHT_LIM: u32 = 10;
+const HEAVY_WEIGHT_LIM: u32 = 50;
 const OVERWEIGHT_COST_PER_KG: u32 = 2;
+const HEAVY_OVERWEIGHT_COST_PER_KG: u32 = 1;
 const SPEEDY_SHIPPING_MULT: u32 = 2;
 
 //Dimensions of a parcel (x, y, z)
@@ -23,18 +26,24 @@ enum Parcel {
     Medium(u32),
     Large(u32),
     XL(u32),
+    Heavy(u32),
 }
 
 impl Parcel {
     //Create a new parcel given its dimensions and weight
     fn new(Dimensions(x, y, z): Dimensions, weight: u32) -> Parcel {
         let max_dim = cmp::max(cmp::max(x, y), z);
-        match max_dim {
+        let parcel = match max_dim {
             0..10 => Parcel::Small(weight),
             10..50 => Parcel::Medium(weight),
             50..100 => Parcel::Large(weight),
             _ => Parcel::XL(weight),
+        };
+
+        if parcel.get_cost() > HEAVY_COST + Parcel::weight_fee(&weight, HEAVY_WEIGHT_LIM) / 2 {
+            return Parcel::Heavy(weight);
         }
+        return parcel;
     }
 
     //Return the cost of the parcel
@@ -44,6 +53,7 @@ impl Parcel {
             Parcel::Medium(weight) => MEDIUM_COST + Parcel::weight_fee(&weight, MEDIUM_WEIGHT_LIM),
             Parcel::Large(weight) => LARGE_COST + Parcel::weight_fee(&weight, LARGE_WEIGHT_LIM),
             Parcel::XL(weight) => XL_COST + Parcel::weight_fee(&weight, LARGE_WEIGHT_LIM),
+            Parcel::Heavy(weight) => HEAVY_COST + Parcel::weight_fee(&weight, HEAVY_WEIGHT_LIM) / 2,
         }
     }
 
@@ -59,6 +69,7 @@ impl Parcel {
             Parcel::Medium(_) => "Medium Parcel: $",
             Parcel::Large(_) => "Large Parcel: $",
             Parcel::XL(_) => "XL Parcel: $",
+            Parcel::Heavy(_) => "Heavy Parcel: $",
         }) + &self.get_cost().to_string()
     }
 }
@@ -229,7 +240,7 @@ mod tests {
                     &order.calculate_order().to_string()))
     }
 
-        //Part 3 tests --------------------------------------------------------------
+    //Part 3 tests --------------------------------------------------------------
 
     #[test]
     fn overweight_small_parcel_cost() {
@@ -256,5 +267,38 @@ mod tests {
             order.produce_invoice(),
             "Small Parcel: $7\nLarge Parcel: $23\n\nTotal Cost: $30"
         )
+    }
+
+    //Part 4 tests --------------------------------------------------------------
+
+    #[test]
+    fn parcel_is_heavy_if_cheaper() -> Result<(), String> {
+        let overweight_small = Parcel::new(Dimensions(1, 1, 1), 24);
+        let heavy_small = Parcel::new(Dimensions(1, 1, 1), 25);
+
+        match overweight_small {
+            Parcel::Small(_) => Ok(()),
+            _ => Err(String::from(format!(
+                "Produced incorrect parcel type: {:?},should be Small",
+                overweight_small
+            ))),
+        };
+        match heavy_small {
+            Parcel::Heavy(_) => Ok(()),
+            _ => Err(String::from(format!(
+                "Produced incorrect parcel type: {:?},should be Heavy",
+                heavy_small
+            ))),
+        }
+    }
+
+    #[test]
+    fn heavy_parcel_price_correct() {
+        assert_eq!(Parcel::new(Dimensions(1, 1, 1), 25).get_cost(), 50)
+    }
+
+    #[test]
+    fn overweight_heavy_parcel_price_correct() {
+        assert_eq!(Parcel::new(Dimensions(1, 1, 1), 55).get_cost(), 55)
     }
 }
