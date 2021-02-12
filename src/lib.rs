@@ -31,7 +31,7 @@ enum Parcel {
 
 impl Parcel {
     //Create a new parcel given its dimensions and weight
-    fn new(Dimensions(x, y, z): Dimensions, weight: u32) -> Parcel {
+    pub fn new(Dimensions(x, y, z): Dimensions, weight: u32) -> Parcel {
         let max_dim = cmp::max(cmp::max(x, y), z);
         let parcel = match max_dim {
             0..10 => Parcel::Small(weight),
@@ -63,7 +63,7 @@ impl Parcel {
     }
 
     //Produce text string giving name and cost of parcel
-    fn display(&self) -> String {
+    pub fn display(&self) -> String {
         String::from(match self {
             Parcel::Small(_) => "Small Parcel: $",
             Parcel::Medium(_) => "Medium Parcel: $",
@@ -82,7 +82,7 @@ struct Order {
 
 impl Order {
     //Produce new order given parcel vector and speedy_shipping bool (true => speedy selected)
-    fn new(parcels: Vec<Parcel>, speedy_shipping: bool) -> Order {
+    pub fn new(parcels: Vec<Parcel>, speedy_shipping: bool) -> Order {
         Order {
             parcels,
             speedy_shipping,
