@@ -61,6 +61,24 @@ impl Order {
     fn calculate_order(&self) -> u32 {
         self.parcels.iter().map(|x| x.get_cost()).sum()
     }
+
+    //Produce text invoice giving itemised list of all parcels and a total cost
+    fn produce_invoice(&self) -> String {
+        let mut itemised_list = String::new();
+        for parcel in &self.parcels {
+            itemised_list.push_str(&parcel.display());
+            itemised_list.push_str("\n");
+        }
+
+        let invoice = format!(
+            "{}\nTotal Cost: {}",
+            itemised_list,
+            self.calculate_order().to_string()
+        );
+        
+        println!("{}", invoice);
+        return invoice;
+    }
 }
 
 #[cfg(test)]
@@ -131,5 +149,20 @@ mod tests {
             SMALL_PARCEL.display(),
             format!("Small Parcel: ${}", &SMALL_COST.to_string())
         )
+    }
+
+    #[test]
+    fn order_can_produce_itemised_invoice() {
+        let order = Order {
+            parcels: vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
+        };
+        assert_eq!(
+            order.produce_invoice(),
+            format!("Small Parcel: ${}\nMedium Parcel: ${}\nLarge Parcel: ${}\nXL Parcel: ${}\n\nTotal Cost: {}", 
+                    &SMALL_COST.to_string(),
+                    &MEDIUM_COST.to_string(),
+                    &LARGE_COST.to_string(),
+                    &XL_COST.to_string(),
+                    &order.calculate_order().to_string()))
     }
 }
