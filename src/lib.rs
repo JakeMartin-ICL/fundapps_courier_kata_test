@@ -6,6 +6,8 @@ const MEDIUM_COST: u32 = 8;
 const LARGE_COST: u32 = 15;
 const XL_COST: u32 = 25;
 
+const SPEEDY_SHIPPING_MULT: u32 = 2;
+
 //Dimensions of a parcel (x, y, z)
 struct Dimensions(u32, u32, u32);
 
@@ -54,11 +56,25 @@ impl Parcel {
 //A collection of parcels that form an order
 struct Order {
     parcels: Vec<Parcel>,
+    speedy_shipping: bool,
 }
 
 impl Order {
-    //Calculate the total cost of the order
+    //Produce new order given parcel vector and speedy_shipping bool (true => speedy selected)
+    fn new(parcels: Vec<Parcel>, speedy_shipping: bool) -> Order {
+        Order {
+            parcels,
+            speedy_shipping,
+        }
+    }
+
+    //Calculate total cost of order
     fn calculate_order(&self) -> u32 {
+        self.parcel_cost() * if self.speedy_shipping {SPEEDY_SHIPPING_MULT} else {1} 
+    }
+
+    //Calculate sub-total cost of all parcels
+    fn parcel_cost(&self) -> u32 {
         self.parcels.iter().map(|x| x.get_cost()).sum()
     }
 
@@ -70,12 +86,16 @@ impl Order {
             itemised_list.push_str("\n");
         }
 
+        if self.speedy_shipping {
+            itemised_list.push_str(&format!("Speedy Shipping: ${}\n", self.parcel_cost()));
+        }
+
         let invoice = format!(
-            "{}\nTotal Cost: {}",
+            "{}\nTotal Cost: ${}",
             itemised_list,
             self.calculate_order().to_string()
         );
-        
+
         println!("{}", invoice);
         return invoice;
     }
@@ -89,6 +109,8 @@ mod tests {
     const MEDIUM_PARCEL: Parcel = Parcel::Medium;
     const LARGE_PARCEL: Parcel = Parcel::Large;
     const XL_PARCEL: Parcel = Parcel::XL;
+
+    //Part 1 tests --------------------------------------------------------------
 
     #[test]
     fn single_small_parcel_cost_correct() {
@@ -126,17 +148,16 @@ mod tests {
 
     #[test]
     fn order_with_one_small_parcel_cost_correct() {
-        let order = Order {
-            parcels: vec![SMALL_PARCEL],
-        };
+        let order = Order::new(vec![SMALL_PARCEL], false);
         assert_eq!(order.calculate_order(), SMALL_COST)
     }
 
     #[test]
     fn order_with_one_of_each_parcel_cost_correct() {
-        let order = Order {
-            parcels: vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
-        };
+        let order = Order::new(
+            vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
+            false,
+        );
         assert_eq!(
             order.calculate_order(),
             SMALL_COST + MEDIUM_COST + LARGE_COST + XL_COST
@@ -153,16 +174,48 @@ mod tests {
 
     #[test]
     fn order_can_produce_itemised_invoice() {
-        let order = Order {
-            parcels: vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
-        };
+        let order = Order::new(
+            vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
+            false,
+        );
         assert_eq!(
             order.produce_invoice(),
-            format!("Small Parcel: ${}\nMedium Parcel: ${}\nLarge Parcel: ${}\nXL Parcel: ${}\n\nTotal Cost: {}", 
+            format!("Small Parcel: ${}\nMedium Parcel: ${}\nLarge Parcel: ${}\nXL Parcel: ${}\n\nTotal Cost: ${}", 
                     &SMALL_COST.to_string(),
                     &MEDIUM_COST.to_string(),
                     &LARGE_COST.to_string(),
                     &XL_COST.to_string(),
+                    &order.calculate_order().to_string()))
+    }
+
+    //Part 2 tests --------------------------------------------------------------
+
+    #[test]
+    fn speedy_shipping_doubles_price() {
+        let order = Order::new(
+            vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
+            true,
+        );
+        assert_eq!(
+            order.calculate_order(),
+            2 * (SMALL_COST + MEDIUM_COST + LARGE_COST + XL_COST)
+        )
+    }
+
+    #[test]
+    fn speedy_shipping_invoice_format() {
+        let order = Order::new(
+            vec![SMALL_PARCEL, MEDIUM_PARCEL, LARGE_PARCEL, XL_PARCEL],
+            true,
+        );
+        assert_eq!(
+            order.produce_invoice(),
+            format!("Small Parcel: ${}\nMedium Parcel: ${}\nLarge Parcel: ${}\nXL Parcel: ${}\nSpeedy Shipping: ${}\n\nTotal Cost: ${}", 
+                    &SMALL_COST.to_string(),
+                    &MEDIUM_COST.to_string(),
+                    &LARGE_COST.to_string(),
+                    &XL_COST.to_string(),
+                    (SMALL_COST + MEDIUM_COST + LARGE_COST + XL_COST).to_string(),
                     &order.calculate_order().to_string()))
     }
 }
