@@ -1,3 +1,4 @@
+#![feature(exclusive_range_pattern)]
 use std::cmp;
 
 const SMALL_COST: u32 = 3;
@@ -19,16 +20,13 @@ enum Parcel {
 
 impl Parcel {
     //Create a new parcel given its dimensions
-    fn new(Dimensions(x, y, z): Dimensions) -> Parcel{
+    fn new(Dimensions(x, y, z): Dimensions) -> Parcel {
         let max_dim = cmp::max(cmp::max(x, y), z);
-        if max_dim < 10 {
-            Parcel::Small
-        } else if max_dim < 50 {
-            Parcel::Medium
-        } else if max_dim < 100 {
-            Parcel::Large
-        } else {
-            Parcel::XL
+        match max_dim {
+            0..10 => Parcel::Small,
+            10..50 => Parcel::Medium,
+            50..100 => Parcel::Large,
+            _ => Parcel::XL,
         }
     }
 
@@ -62,19 +60,25 @@ mod tests {
 
     #[test]
     fn small_box_becomes_small_parcel() -> Result<(), String> {
-        let small_box = Parcel::new(Dimensions (1, 1, 1));
+        let small_box = Parcel::new(Dimensions(1, 1, 1));
         match small_box {
             Parcel::Small => Ok(()),
-            _ => Err(String::from(format!("Produced incorrect parcel type: {:?}", small_box))),
+            _ => Err(String::from(format!(
+                "Produced incorrect parcel type: {:?}",
+                small_box
+            ))),
         }
     }
 
     #[test]
     fn parcel_from_box_uses_largest_dimension() -> Result<(), String> {
-        let long_box = Parcel::new(Dimensions (1, 25, 50));
+        let long_box = Parcel::new(Dimensions(1, 25, 50));
         match long_box {
             Parcel::Large => Ok(()),
-            _ => Err(String::from(format!("Produced incorrect parcel type: {:?}", long_box))),
+            _ => Err(String::from(format!(
+                "Produced incorrect parcel type: {:?}",
+                long_box
+            ))),
         }
     }
 }
