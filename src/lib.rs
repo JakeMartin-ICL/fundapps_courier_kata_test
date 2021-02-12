@@ -9,6 +9,7 @@ const XL_COST: u32 = 25;
 struct Dimensions(u32, u32, u32);
 
 //Types of parcel
+#[derive(Debug)]
 enum Parcel {
     Small,
     Medium,
@@ -64,7 +65,7 @@ mod tests {
         let small_box = Parcel::new(Dimensions (1, 1, 1));
         match small_box {
             Parcel::Small => Ok(()),
-            _ => Err(String::from("Produced incorrect parcel type"))
+            _ => Err(String::from(format!("Produced incorrect parcel type: {:?}", small_box))),
         }
     }
 
@@ -73,7 +74,7 @@ mod tests {
         let long_box = Parcel::new(Dimensions (1, 25, 50));
         match long_box {
             Parcel::Large => Ok(()),
-            _ => Err(String::from("Produced incorrect parcel type"))
+            _ => Err(String::from(format!("Produced incorrect parcel type: {:?}", long_box))),
         }
     }
 }
